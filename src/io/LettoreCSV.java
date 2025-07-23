@@ -35,8 +35,8 @@ public class LettoreCSV {
                 return incarichi;
             }
 
-            // Dividiamo la riga usando virgola o spazi come separatore
-            String[] intestazioni = primaRiga.trim().split("\\s*,\\s*|\\s+");
+            // Dividiamo la riga usando virgola come separatore
+            String[] intestazioni = primaRiga.trim().split("\\s*,\\s*");
             int colonne = intestazioni.length; // serve per sapere quante colonne (numero di incarichi) ci sono.
 
             // Struttura per raccogliere le persone per ciascun incarico

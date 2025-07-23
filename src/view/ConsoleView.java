@@ -7,6 +7,7 @@ import java.util.Scanner;
 import model.Assenza;
 import model.Assenze;
 import model.Incarico;
+import model.Persona;
 
 /**
  * Classe responsabile dell'interazione con l'utente tramite console.
@@ -24,7 +25,13 @@ public class ConsoleView {
     }
 
     public void mostraIncarichi(List<Incarico> incarichi) {
-        System.out.println(incarichi);
+        System.out.println("Incarichi:");
+        for (Incarico incarico : incarichi) {
+            System.out.println(incarico.getIncarico());
+            for (Persona persona : incarico.getLista()) {
+                System.out.println("  " + persona.getNomeECognome());
+            }
+        }
     }
 
     public void mostraErrore(String string) {
@@ -120,5 +127,15 @@ public class ConsoleView {
                 System.out.println("- " + assenza.getPersona().getNomeECognome() + " assente il " + assenza.getData());
             }
         }
+    }
+
+    /**
+     * Chiede all'utente se vuole terminare il programma.
+     * @return true se l'utente vuole uscire, false altrimenti
+     */
+    public boolean chiediSeUscire() {
+        System.out.println("Vuoi uscire? (s/n)");
+        String risposta = scanner.nextLine();
+        return "s".equalsIgnoreCase(risposta);
     }
 } 

@@ -81,14 +81,17 @@ public class Pianificazione {
      */
     public void pianifica() {
         // Creiamo una copia della lista incarichi e la mescoliamo
-        List<Incarico> incarichiMescolati = new ArrayList<>(this.incarichi);
-        Collections.shuffle(incarichiMescolati);
+        List<Incarico> incarichi = new ArrayList<>(this.incarichi);
 
         // Ora cicliamo sulla lista mescolata
         for (LocalDate data : this.dateSelezionate) {
             System.out.println("\nPianificazione per " + data);
             
-            for (Incarico incarico : incarichiMescolati) { // <-- Usiamo la lista mescolata
+            for (Incarico incarico : incarichi) {
+                //Creiamo una copia della lista dell'incarico derivante da incarichi
+                List<Persona> persone = new ArrayList<>(incarico.getLista());
+                //Mescoliamo la lista delle persone
+                Collections.shuffle(persone);
                 // Trova la prossima persona disponibile
                 Persona persona = trovaProssimaPersonaDisponibile(incarico, data);
                 

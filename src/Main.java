@@ -64,10 +64,9 @@ public class Main {
             view.mostraRiepilogoAssenze(assenze);
 
             // Crea Assegnazioni con l'apposito metodo. // ottieni l'oggetto Assenze
-            Pianificazione pianificazione = new Pianificazione(incarichi, calendario, assenze.getAssenze()); // passi la
-                                                                                                             // lista
-                                                                                                             // interna
+            Pianificazione pianificazione = new Pianificazione(incarichi, calendario, assenze.getAssenze());                                                                                                            // interna
             pianificazione.pianifica();
+            // Stampa le statistiche dell'oggetto Pianificazione
             StatisticheIncarichi.stampaStatistiche(pianificazione);
 
             // Mostra il calendario in output
@@ -75,9 +74,7 @@ public class Main {
             // chiedi il percorso.
             // Scrivi il calendario su un file CSV usando la classe ScrittorePianificazione.
             // Chiedi all'utente se vuole uscire. Se si, esci (isRunning = false).
-            System.out.println("Vuoi uscire? (s/n)");
-            String risposta = scanner.nextLine();
-            if ("s".equalsIgnoreCase(risposta)) {
+            if (view.chiediSeUscire()) {
                 isRunning = false;
             }
         }
