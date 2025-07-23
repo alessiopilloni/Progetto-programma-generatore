@@ -2,6 +2,7 @@ import io.LettoreCSV;
 import model.Incarico;
 import model.Persona;
 import model.Pianificazione;
+import stats.StatisticheIncarichi;
 import utils.CostruttoreCalendario;
 import model.Assenza;
 import model.Assenze;
@@ -86,7 +87,7 @@ public class Main {
             // Crea Assegnazioni con l'apposito metodo. // ottieni l'oggetto Assenze
             Pianificazione pianificazione = new Pianificazione(incarichi, calendario, assenze.getAssenze()); // passi la lista interna
             pianificazione.pianifica();
-            pianificazione.stampaRiepilogo();
+            StatisticheIncarichi.stampaStatistiche(pianificazione);
 
             // Mostra il calendario in output
             // Chiedi all'utente se vuole salvare il calendario in un file CSV. Se si,

@@ -112,15 +112,9 @@ public class Pianificazione {
         return new ArrayList<>(assegnazioni);
     }
 
-    /**
-     * Stampa un riepilogo della pianificazione
-     */
-    public void stampaRiepilogo() {
-        System.out.println("\n=== RIEPILOGO PIANIFICAZIONE ===");
-        System.out.println("Date pianificate: " + dateSelezionate.size());
-        System.out.println("Incarichi gestiti: " + incarichi.size());
-        System.out.println("Assegnazioni create: " + assegnazioni.size());
-        
-        // Qui potremmo aggiungere statistiche più dettagliate
+    public List<Incarico> getIncarichi() {
+        return new ArrayList<>(incarichi);
     }
+
+
 }
