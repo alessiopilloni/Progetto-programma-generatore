@@ -11,12 +11,10 @@ import model.Calendario;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
 
 public class Main {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
         boolean isRunning = true;
         ConsoleView view = new ConsoleView();
 
