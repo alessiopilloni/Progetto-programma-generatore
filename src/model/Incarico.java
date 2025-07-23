@@ -1,5 +1,6 @@
 package model;
 
+import java.util.Collections;
 import java.util.List;
 
 public class Incarico {
@@ -33,6 +34,10 @@ public class Incarico {
 
     public int getNumeroPersone() {
         return lista.size();
+    }
+
+    public void mescolaPersone() {
+        Collections.shuffle(lista);
     }
 }
  

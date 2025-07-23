@@ -83,9 +83,8 @@ public class Main {
             // Stampa il riepilogo delle assenze inserite.
             stampaRiepilogoAssenze(assenze);
 
-            // Crea Assegnazioni con l'apposito metodo.
-            List<LocalDate> date = calendario.getDate();
-            Pianificazione pianificazione = new Pianificazione(incarichi, date, assenze);
+            // Crea Assegnazioni con l'apposito metodo. // ottieni l'oggetto Assenze
+            Pianificazione pianificazione = new Pianificazione(incarichi, calendario, assenze.getAssenze()); // passi la lista interna
             pianificazione.pianifica();
             pianificazione.stampaRiepilogo();
 

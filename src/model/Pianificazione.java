@@ -10,17 +10,21 @@ public class Pianificazione {
     private final List<LocalDate> dateSelezionate;
     private final List<Assenza> assenze;
 
-    public Pianificazione(List<Incarico> incarichi, List<LocalDate> dateSelezionate, List<Assenza> assenze) {
+    public Pianificazione(List<Incarico> incarichi, Calendario calendario, List<Assenza> assenze) {
         // Inizializzazione delle strutture dati
         this.incarichi = new ArrayList<>(incarichi);
         this.assegnazioni = new ArrayList<>();
         this.ultimoIndiceUsato = new HashMap<>();
-        this.dateSelezionate = new ArrayList<>(dateSelezionate);
+        this.dateSelezionate = calendario.getDate();
         this.assenze = new ArrayList<>(assenze);
         
         // Inizializza gli indici per la rotazione
         for (Incarico inc : incarichi) {
             ultimoIndiceUsato.put(inc, -1);
+        }
+        // Mescoliamo le persone all'interno di ogni oggetto Incarico
+        for (Incarico inc : this.incarichi) {
+            inc.mescolaPersone(); // Dovremmo aggiungere questo metodo in Incarico.java
         }
     }
 
@@ -28,8 +32,11 @@ public class Pianificazione {
      * Verifica se una persona è assente in una data specifica
      */
     private boolean isPersonaAssente(Persona persona, LocalDate data) {
+        // @param a assenze è una lista di assenze
+        // anyMatch restituisce true se almeno un elemento della lista assenze soddisfa la condizione
         return assenze.stream()
                 .anyMatch(a -> a.getPersona().equals(persona) && a.getData().equals(data));
+            
     }
 
     /**
@@ -45,6 +52,8 @@ public class Pianificazione {
      */
     private Persona trovaProssimaPersonaDisponibile(Incarico incarico, LocalDate data) {
         int numeroPersone = incarico.getNumeroPersone();
+        // @param numeroPersone è il numero di persone disponibili per l'incarico
+        // Se il numero di persone disponibili è 0, restituisce null
         if (numeroPersone == 0) return null;
 
         // Partiamo dall'ultimo indice usato + 1
@@ -54,7 +63,7 @@ public class Pianificazione {
         // Proviamo tutte le persone disponibili
         while (tentativi < numeroPersone) {
             Persona candidato = incarico.getPersona(indiceCorrente);
-            
+            // Se la persona non è assente e non è già assegnata, restituisce la persona
             if (!isPersonaAssente(candidato, data) && !isPersonaGiaAssegnata(candidato, data)) {
                 ultimoIndiceUsato.put(incarico, indiceCorrente);
                 return candidato;
@@ -71,12 +80,15 @@ public class Pianificazione {
      * Esegue la pianificazione completa
      */
     public void pianifica() {
-        // Per ogni data selezionata
-        for (LocalDate data : dateSelezionate) {
+        // Creiamo una copia della lista incarichi e la mescoliamo
+        List<Incarico> incarichiMescolati = new ArrayList<>(this.incarichi);
+        Collections.shuffle(incarichiMescolati);
+
+        // Ora cicliamo sulla lista mescolata
+        for (LocalDate data : this.dateSelezionate) {
             System.out.println("\nPianificazione per " + data);
             
-            // Per ogni incarico
-            for (Incarico incarico : incarichi) {
+            for (Incarico incarico : incarichiMescolati) { // <-- Usiamo la lista mescolata
                 // Trova la prossima persona disponibile
                 Persona persona = trovaProssimaPersonaDisponibile(incarico, data);
                 
@@ -86,6 +98,7 @@ public class Pianificazione {
                     assegnazioni.add(assegnazione);
                     System.out.println("  " + incarico.getIncarico() + " -> " + persona.getNomeECognome());
                 } else {
+                    // Se non c'è nessuna persona disponibile, stampa un messaggio di errore
                     System.out.println("  " + incarico.getIncarico() + " -> NESSUNO DISPONIBILE");
                 }
             }
