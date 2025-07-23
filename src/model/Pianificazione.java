@@ -1,81 +1,113 @@
 package model;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import model.Calendario;
+import java.util.*;
 
 public class Pianificazione {
-    private List<Assegnazione> assegnazioni;
-    private Assenze assenze;
-    private List<Incarico> incarichi;
-    private List<Persona> persone;
-    private final List<LocalDate> giorniSettimana = List.of(
-            LocalDate.of(2024, 12, 30), // Lunedì
-            LocalDate.of(2024, 12, 31), // Martedì
-            LocalDate.of(2025, 1, 1), // Mercoledì
-            LocalDate.of(2025, 1, 2), // Giovedì
-            LocalDate.of(2025, 1, 3), // Venerdì
-            LocalDate.of(2025, 1, 4), // Sabato
-            LocalDate.of(2025, 1, 5) // Domenica
-    );
-    private Calendario calendario;
+    private final List<Incarico> incarichi;
+    private final List<Assegnazione> assegnazioni;
+    private final Map<Incarico, Integer> ultimoIndiceUsato;
+    private final List<LocalDate> dateSelezionate;
+    private final List<Assenza> assenze;
 
-    public Pianificazione(Assenze assenze, List<Incarico> incarichi, Calendario calendario) {
-        this.assenze = assenze;
-        this.incarichi = incarichi;
-        this.calendario = calendario;
+    public Pianificazione(List<Incarico> incarichi, List<LocalDate> dateSelezionate, List<Assenza> assenze) {
+        // Inizializzazione delle strutture dati
+        this.incarichi = new ArrayList<>(incarichi);
+        this.assegnazioni = new ArrayList<>();
+        this.ultimoIndiceUsato = new HashMap<>();
+        this.dateSelezionate = new ArrayList<>(dateSelezionate);
+        this.assenze = new ArrayList<>(assenze);
+        
+        // Inizializza gli indici per la rotazione
+        for (Incarico inc : incarichi) {
+            ultimoIndiceUsato.put(inc, -1);
+        }
     }
 
-   
+    /**
+     * Verifica se una persona è assente in una data specifica
+     */
+    private boolean isPersonaAssente(Persona persona, LocalDate data) {
+        return assenze.stream()
+                .anyMatch(a -> a.getPersona().equals(persona) && a.getData().equals(data));
+    }
 
+    /**
+     * Verifica se una persona è già assegnata in una data specifica
+     */
+    private boolean isPersonaGiaAssegnata(Persona persona, LocalDate data) {
+        return assegnazioni.stream()
+                .anyMatch(a -> a.getPersona().equals(persona) && a.getData().equals(data));
+    }
+
+    /**
+     * Trova la prossima persona disponibile per un incarico in una data
+     */
+    private Persona trovaProssimaPersonaDisponibile(Incarico incarico, LocalDate data) {
+        int numeroPersone = incarico.getNumeroPersone();
+        if (numeroPersone == 0) return null;
+
+        // Partiamo dall'ultimo indice usato + 1
+        int indiceCorrente = (ultimoIndiceUsato.get(incarico) + 1) % numeroPersone;
+        int tentativi = 0;
+
+        // Proviamo tutte le persone disponibili
+        while (tentativi < numeroPersone) {
+            Persona candidato = incarico.getPersona(indiceCorrente);
+            
+            if (!isPersonaAssente(candidato, data) && !isPersonaGiaAssegnata(candidato, data)) {
+                ultimoIndiceUsato.put(incarico, indiceCorrente);
+                return candidato;
+            }
+
+            indiceCorrente = (indiceCorrente + 1) % numeroPersone;
+            tentativi++;
+        }
+
+        return null; // Nessuna persona disponibile trovata
+    }
+
+    /**
+     * Esegue la pianificazione completa
+     */
     public void pianifica() {
-
-        List<Incarico> incarichiCopia = new ArrayList<>(incarichi);
-        Collections.shuffle(incarichiCopia);
-        for (Incarico incarico : incarichiCopia) {
-            for (Persona persona : incarico.getLista()) {
-                System.out.println(incarico.getIncarico() + "-"
-                 + persona.getNomeECognome());
+        // Per ogni data selezionata
+        for (LocalDate data : dateSelezionate) {
+            System.out.println("\nPianificazione per " + data);
+            
+            // Per ogni incarico
+            for (Incarico incarico : incarichi) {
+                // Trova la prossima persona disponibile
+                Persona persona = trovaProssimaPersonaDisponibile(incarico, data);
+                
+                if (persona != null) {
+                    // Crea e registra l'assegnazione
+                    Assegnazione assegnazione = new Assegnazione(incarico, persona, data);
+                    assegnazioni.add(assegnazione);
+                    System.out.println("  " + incarico.getIncarico() + " -> " + persona.getNomeECognome());
+                } else {
+                    System.out.println("  " + incarico.getIncarico() + " -> NESSUNO DISPONIBILE");
+                }
             }
         }
     }
 
+    /**
+     * Restituisce la lista delle assegnazioni create
+     */
+    public List<Assegnazione> getAssegnazioni() {
+        return new ArrayList<>(assegnazioni);
+    }
 
-
-
-
-
-
-
-
-        // Creiamo degli arrayCopia delle liste incarico
-        // Quando creiamo l'arrayCopia, facciamo uno shuffle per evitare che la prima persona sia sempre la stessa
-        // Questo per evitare di modificare la lista originale
-        // Possiamo svuotare l'array copia man mano che utilizziamo le persone
-        // Quando l'arrayCopia è vuoto, significa che abbiamo assegnato tutte le persone
-        // quindi rimpiazziamo l'arrayCopia con la lista originale
-        // e ripartiamo da capo
-
-        // Copriamo con il primo incarico tutte le date
-        // Quindi passiamo al secondo incarico e così via
-        // nel farlo verifichiamo ogni volta che la persona non sia assente
-        // nel farlo verifichiamo anche che la persona non sia già assegnata ad un incarico nella stessa data
-        // qualora dovesse essere già assegnata, passiamo alla prossima persona
-        // per farlo utilizziamo un ciclo concatenato
-
-        // Alla fine verifichiamo che tutte le persone siano assegnate ad almeno un incarico
-        // Se non è così ricominciamo da capo
-        // Massimo 1000 tentativi, dopo di che si stampa un messaggio di avviso e si lascia l'ultima combinazione
-
-
-        // L'obiettivo è usare tutti in modo efficiente ed equilibrato.
-        // L'output sarà una lista di Assegnazioni.
-        // Prevede anche un metodo per mostrare i dati ordinati in una tabella da terminale.
-        // Se possibile passiamo i dati a StatisticheIncarichi per calcolare le statistiche
-
+    /**
+     * Stampa un riepilogo della pianificazione
+     */
+    public void stampaRiepilogo() {
+        System.out.println("\n=== RIEPILOGO PIANIFICAZIONE ===");
+        System.out.println("Date pianificate: " + dateSelezionate.size());
+        System.out.println("Incarichi gestiti: " + incarichi.size());
+        System.out.println("Assegnazioni create: " + assegnazioni.size());
         
-        
+        // Qui potremmo aggiungere statistiche più dettagliate
     }
 }

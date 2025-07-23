@@ -84,13 +84,21 @@ public class Main {
             stampaRiepilogoAssenze(assenze);
 
             // Crea Assegnazioni con l'apposito metodo.
-            Pianificazione pianificazione = new Pianificazione(assenze, incarichi, calendario);
+            List<LocalDate> date = calendario.getDate();
+            Pianificazione pianificazione = new Pianificazione(incarichi, date, assenze);
             pianificazione.pianifica();
+            pianificazione.stampaRiepilogo();
+
             // Mostra il calendario in output
             // Chiedi all'utente se vuole salvare il calendario in un file CSV. Se si,
             // chiedi il percorso.
             // Scrivi il calendario su un file CSV usando la classe ScrittorePianificazione.
             // Chiedi all'utente se vuole uscire. Se si, esci (isRunning = false).
+            System.out.println("Vuoi uscire? (s/n)");
+            String risposta = scanner.nextLine();
+            if ("s".equalsIgnoreCase(risposta)) {
+                isRunning = false;
+            }
         }
     }
 

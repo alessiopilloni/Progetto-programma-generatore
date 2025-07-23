@@ -19,6 +19,20 @@ public class Incarico {
     public List<Persona> getLista() {
         return lista;
     }
+    public Persona getPersona(int index) {
+        return lista.get(index);
+    }
 
+    public void addPersona(Persona persona) {
+        lista.add(persona);
+    }
+
+    public void removePersona(Persona persona) {
+        lista.remove(persona);
+    }
+
+    public int getNumeroPersone() {
+        return lista.size();
+    }
 }
  

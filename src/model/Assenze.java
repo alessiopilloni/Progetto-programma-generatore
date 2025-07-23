@@ -18,4 +18,13 @@ public class Assenze {
     public List<Assenza> getAssenze() {
         return assenze;
     }
+
+    public boolean isAssente(Persona persona) {
+        for (Assenza assenza : assenze) {
+            if (assenza.getPersona().equals(persona)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
