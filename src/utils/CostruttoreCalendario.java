@@ -37,6 +37,8 @@ public class CostruttoreCalendario {
      */
     public static Calendario daGiorniDellaSettimana(LocalDate dataInizio, LocalDate dataFine, Set<DayOfWeek> giorniScelti) {
         List<LocalDate> dateSelezionate = new ArrayList<>();
+        // Per ogni data tra dataInizio e dataFine, se il giorno della settimana
+        // (data.getDayOfWeek()) è tra quelli scelti, la aggiungiamo alla lista.
         for (LocalDate data = dataInizio; !data.isAfter(dataFine); data = data.plusDays(1)) {
             if (giorniScelti.contains(data.getDayOfWeek())) {
                 dateSelezionate.add(data);
@@ -63,12 +65,13 @@ public class CostruttoreCalendario {
                 : daGiorniDellaSettimana(dataInizio, dataFine, giorniScelti);
 
         // Poi filtriamo escludendo le date non pianificabili
-        List<LocalDate> filtrate = new ArrayList<>();
+        List<LocalDate> dateFiltrate = new ArrayList<>();
+        // Per ogni data nel calendario base, se non è tra le date da non pianificare, la aggiungiamo alla lista.
         for (LocalDate d : base.getDate()) {
             if (dateDaNonPianificare == null || !dateDaNonPianificare.contains(d)) {
-                filtrate.add(d);
+                dateFiltrate.add(d);
             }
         }
-        return new Calendario(filtrate);
+        return new Calendario(dateFiltrate);
     }
 }

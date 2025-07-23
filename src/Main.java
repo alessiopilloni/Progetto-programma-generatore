@@ -1,17 +1,15 @@
 import io.LettoreCSV;
 import model.Incarico;
-import model.Persona;
 import model.Pianificazione;
 import stats.StatisticheIncarichi;
 import utils.CostruttoreCalendario;
-import model.Assenza;
+import engine.GestoreAssenze;
+import utils.ParserUtils;
+import view.ConsoleView;
 import model.Assenze;
 import model.Calendario;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
@@ -20,72 +18,55 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         boolean isRunning = true;
-        while (isRunning) {
-            // Chiedi all'utente di inserire il percorso del file CSV finchè non inserisce
-            // un percorso valido.
-            System.out.println("Inserisci il percorso del file CSV:");
-            String percorsoFile = scanner.nextLine();
-            // Lettore CSV legge il file e restituisce una lista di Incarico
-            List<Incarico> incarichi = LettoreCSV.leggiIncarichi(percorsoFile);
-            System.out.println(incarichi);
-  
-            // Chiedi all'utente di inserire la data di inizio e la data di fine.
-            System.out.println("Inserisci la data di inizio:");
-            LocalDate dataInizio = LocalDate.parse(scanner.nextLine());
-            System.out.println("Inserisci la data di fine:");
-            LocalDate dataFine = LocalDate.parse(scanner.nextLine());
-            // Chiedi all'utente di inserire i giorni della settimana che vuole pianificare.
-            System.out.println(
-                    "Inserisci i giorni della settimana da pianificare (numeri 1=Lun ... 7=Dom, separati da virgola):");
-            String giorniInput = scanner.nextLine();
-            // Converte la stringa in un Set<DayOfWeek>
-            Set<DayOfWeek> giorniSet = new HashSet<>();
-            // Se l'utente ha inserito dei giorni, li aggiunge al Set altrimenti li aggiunge
-            // tutti.
-            if (!giorniInput.trim().isEmpty()) {
-                // Splitta la stringa in base alla virgola e la converte in un Set<DayOfWeek>
-                for (String token : giorniInput.split(",")) {
-                    token = token.trim();
-                    try {
-                        int num = Integer.parseInt(token);
-                        if (num >= 1 && num <= 7) {
-                            giorniSet.add(DayOfWeek.of(num));
-                        }
-                    } catch (NumberFormatException ignored) {
-                        // Se non è un numero, ignoriamo il token (riduciamo al minimo la logica di
-                        // validazione)
-                    }
-                }
-            }
-            // Chiedi all'utente di inserire le date da non pianificare.
-            System.out.println("Inserisci le date da non pianificare (YYYY-MM-DD separate da virgola):");
-            String dateDaNonPianificareInput = scanner.nextLine();
-            List<LocalDate> dateDaNonPianificare = new ArrayList<>();
-            if (!dateDaNonPianificareInput.trim().isEmpty()) {
-                for (String token : dateDaNonPianificareInput.split(",")) {
-                    token = token.trim();
-                    try {
-                        dateDaNonPianificare.add(LocalDate.parse(token));
-                    } catch (DateTimeParseException ignored) {
-                        System.out.println("Data non valida ignorata: " + token);
-                    }
-                }
-            }
-            // Costruisci il calendario vuoto con CostruttoreCalendario
-            Calendario calendario = CostruttoreCalendario.costruisciCalendarioVuoto(dataInizio, dataFine, giorniSet,
-                    dateDaNonPianificare);
-            // Mostra il calendario vuoto
-            System.out.println("Date in cui si svolgeranno gli incarichi:");
-            System.out.println(calendario.getDate());
-            
-            // Chiedi all'utente di inserire le assenze.
-            Assenze assenze = gestisciInserimentoAssenze(scanner);
+        ConsoleView view = new ConsoleView();
 
-            // Stampa il riepilogo delle assenze inserite.
-            stampaRiepilogoAssenze(assenze);
+        while (isRunning) {
+            boolean fileValido = false;
+            List<Incarico> incarichi = null;
+
+            while (!fileValido) {
+                try {
+                    String percorsoFile = view.richiediPercorsoFile();
+                    incarichi = LettoreCSV.leggiIncarichi(percorsoFile);
+                    fileValido = true;
+                    view.mostraIncarichi(incarichi);
+                } catch (Exception e) {
+                    view.mostraErrore("Errore nella lettura del file: " + e.getMessage());
+                }
+            }
+
+            LocalDate dataInizio = view.richiediData("Inserisci la data di inizio:");
+            LocalDate dataFine = view.richiediData("Inserisci la data di fine:");
+
+            // Gestione giorni settimana
+            String giorniInput = view.richiediGiorniSettimana();
+            // La funzione parseGiorniSettimana serve a convertire la stringa di input in un set di giorni della settimana.
+            Set<DayOfWeek> giorniSet = ParserUtils.parseGiorniSettimana(giorniInput);
+
+            // Gestione date da non pianificare
+            String dateDaNonPianificareInput = view.richiediDateDaNonPianificare();
+            // La funzione parseDateDaNonPianificare serve a convertire la stringa di input in una lista di date.
+            List<LocalDate> dateDaNonPianificare = ParserUtils.parseDateDaNonPianificare(dateDaNonPianificareInput);
+
+            // Costruzione calendario
+            Calendario calendario = CostruttoreCalendario.costruisciCalendarioVuoto(
+                    dataInizio,// Il programma inizia questo giorno
+                    dataFine,// Il programma termina questo giorno
+                    giorniSet,// Il programma usa questi giorni della settimana
+                    dateDaNonPianificare);// Il programma non usa queste date
+
+            // Visualizzazione risultato
+            view.mostraCalendario(calendario.getDate());
+
+            // Gestione delle assenze
+            GestoreAssenze gestoreAssenze = new GestoreAssenze(view);
+            Assenze assenze = gestoreAssenze.raccogliAssenze();
+            view.mostraRiepilogoAssenze(assenze);
 
             // Crea Assegnazioni con l'apposito metodo. // ottieni l'oggetto Assenze
-            Pianificazione pianificazione = new Pianificazione(incarichi, calendario, assenze.getAssenze()); // passi la lista interna
+            Pianificazione pianificazione = new Pianificazione(incarichi, calendario, assenze.getAssenze()); // passi la
+                                                                                                             // lista
+                                                                                                             // interna
             pianificazione.pianifica();
             StatisticheIncarichi.stampaStatistiche(pianificazione);
 
@@ -102,57 +83,5 @@ public class Main {
         }
     }
 
-    /**
-     * Gestisce il dialogo con l'utente per l'inserimento delle assenze.
-     * Continua a chiedere finché l'utente non risponde 'n'.
-     * @param scanner L'oggetto Scanner per leggere l'input dell'utente.
-     * @return Un oggetto Assenze popolato con i dati inseriti.
-     */
-    private static Assenze gestisciInserimentoAssenze(Scanner scanner) {
-        Assenze assenze = new Assenze();
-        
-        while (true) {
-            System.out.print("Vuoi inserire un'altra assenza? (s/n): ");
-            String risposta = scanner.nextLine();
 
-            if ("s".equalsIgnoreCase(risposta)) {
-                try {
-                    System.out.print("Inserisci il nome della persona: ");
-                    String nome = scanner.nextLine();
-                    Persona persona = new Persona(nome);
-
-                    System.out.print("Inserisci la data dell'assenza (YYYY-MM-DD): ");
-                    LocalDate dataAssenza = LocalDate.parse(scanner.nextLine());
-                    
-                    Assenza assenza = new Assenza(persona, dataAssenza);
-                    assenze.addAssenza(assenza);
-                    System.out.println("  -> Assenza aggiunta.");
-
-                } catch (DateTimeParseException e) {
-                    System.err.println("ERRORE: Formato data non valido. Assenza non inserita. Riprova.");
-                }
-            } else if ("n".equalsIgnoreCase(risposta)) {
-                break; // Esce dal ciclo
-            } else {
-                System.out.println("Risposta non valida. Per favore, inserisci 's' o 'n'.");
-            }
-        }
-        return assenze;
-    }
-
-    /**
-     * Stampa un riepilogo delle assenze inserite.
-     * @param assenze L'oggetto Assenze da cui leggere i dati.
-     */
-    private static void stampaRiepilogoAssenze(Assenze assenze) {
-        System.out.println("\n--- Riepilogo Assenze Inserite ---");
-        List<Assenza> lista = assenze.getAssenze();
-        if (lista.isEmpty()) {
-            System.out.println("Nessuna assenza registrata.");
-        } else {
-            for (Assenza assenza : lista) {
-                System.out.println("- " + assenza.getPersona().getNomeECognome() + " assente il " + assenza.getData());
-            }
-        }
-    }
 }
