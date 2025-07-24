@@ -32,9 +32,11 @@ public class SwingView extends JFrame {
     private JButton pianificaButton;
     private JButton creaProgrammaButton;
     private Pianificazione ultimaPianificazione; // Per memorizzare l'ultima pianificazione eseguita
+    private List<Incarico> incarichi; // Lista incarichi caricati
 
     public SwingView() {
         assenze = new ArrayList<>();
+        incarichi = new ArrayList<>();
         setupUI();
     }
 
@@ -194,6 +196,12 @@ public class SwingView extends JFrame {
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
             csvPathField.setText(selectedFile.getAbsolutePath());
+            try {
+                this.incarichi = LettoreCSV.leggiIncarichi(selectedFile.getAbsolutePath());
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Errore nel caricamento del CSV: " + ex.getMessage());
+                this.incarichi = new ArrayList<>();
+            }
         }
     }
 
@@ -201,12 +209,19 @@ public class SwingView extends JFrame {
         JDialog dialog = new JDialog(this, "Aggiungi Assenza", true);
         dialog.setLayout(new GridLayout(3, 2, 5, 5));
 
-        JTextField nomeField = new JTextField(15);
+        // Estrai tutti i nomi unici delle persone dagli incarichi
+        java.util.Set<String> nomiPersone = new java.util.LinkedHashSet<>();
+        for (Incarico inc : incarichi) {
+            for (Persona p : inc.getLista()) {
+                nomiPersone.add(p.getNomeECognome());
+            }
+        }
+        JComboBox<String> nomeComboBox = new JComboBox<>(nomiPersone.toArray(new String[0]));
         JDateChooser dataChooser = new JDateChooser();
         dataChooser.setDateFormatString("dd/MM/yyyy");
 
         dialog.add(new JLabel("Nome e Cognome:"));
-        dialog.add(nomeField);
+        dialog.add(nomeComboBox);
         dialog.add(new JLabel("Data:"));
         dialog.add(dataChooser);
 
@@ -218,12 +233,11 @@ public class SwingView extends JFrame {
                     "Errore", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-
-            Persona persona = new Persona(nomeField.getText());
+            String nomeSelezionato = (String) nomeComboBox.getSelectedItem();
+            Persona persona = new Persona(nomeSelezionato);
             LocalDate data = dataChooser.getDate().toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
-            
             assenze.add(new Assenza(persona, data));
             outputArea.append("Aggiunta assenza: " + persona.getNomeECognome() + 
                             " il " + data + "\n");
@@ -247,13 +261,11 @@ public class SwingView extends JFrame {
             if (csvPathField.getText().trim().isEmpty()) {
                 throw new IllegalArgumentException("Il percorso del file CSV è obbligatorio");
             }
-
             if (dataInizioChooser.getDate() == null || dataFineChooser.getDate() == null) {
                 throw new IllegalArgumentException("Le date di inizio e fine sono obbligatorie");
             }
-
             // Leggi il file CSV
-            List<Incarico> incarichi = LettoreCSV.leggiIncarichi(csvPathField.getText());
+            this.incarichi = LettoreCSV.leggiIncarichi(csvPathField.getText());
             
             // Conversione da Date a LocalDate
             LocalDate dataInizio = dataInizioChooser.getDate().toInstant()
