@@ -33,6 +33,7 @@ public class SwingView extends JFrame {
     private JButton creaProgrammaButton;
     private Pianificazione ultimaPianificazione; // Per memorizzare l'ultima pianificazione eseguita
     private List<Incarico> incarichi; // Lista incarichi caricati
+    private JButton resetButton;
 
     public SwingView() {
         assenze = new ArrayList<>();
@@ -140,6 +141,17 @@ public class SwingView extends JFrame {
         creaProgrammaButton.addActionListener(e -> creaProgramma());
         mainPanel.add(creaProgrammaButton, gbc);
 
+        // Bottone Reset
+        gbc.gridy = 10;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        resetButton = new JButton("Reset");
+        resetButton.addActionListener(e -> resetFields());
+        mainPanel.add(resetButton, gbc);
+        gbc.gridwidth = 1;
+
+        // Reset: pulisce tutti i campi, pulisce l'output e pulisce la lista delle date e le assenze
+
         // Area output
         gbc.gridy = 8;
         gbc.weighty = 1.0;
@@ -170,6 +182,21 @@ public class SwingView extends JFrame {
                 dateListModel.remove(selectedIdx);
             }
         });
+    }
+
+    private void resetFields() {
+        csvPathField.setText("");
+        dataInizioChooser.setDate(new Date());
+        dataFineChooser.setDate(new Date());
+        for (JCheckBox cb : giorniCheckBox) {
+            cb.setSelected(false);
+        }
+        dateChooserNonPianificare.setDate(null);
+        dateListModel.clear();
+        outputArea.setText("");
+        assenze.clear();
+        incarichi.clear();
+        ultimaPianificazione = null;
     }
 
     private void mostraFileChooser() {
