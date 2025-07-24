@@ -7,20 +7,21 @@ import io.LettoreCSV;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import com.toedter.calendar.JDateChooser;
 import java.time.LocalDate;
-import java.time.DayOfWeek;
-import java.time.format.DateTimeParseException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Date;
 
 public class SwingView extends JFrame {
     private JTextField csvPathField;
-    private JTextField dataInizioField;
-    private JTextField dataFineField;
-    private JTextField giorniSettimanaField;
+    private JDateChooser dataInizioChooser;
+    private JDateChooser dataFineChooser;
+    private JCheckBox[] giorniCheckBox = new JCheckBox[7];
     private JTextField dateDaNonPianificareField;
     private JTextArea outputArea;
     private List<Assenza> assenze;
@@ -37,20 +38,19 @@ public class SwingView extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Panel principale con GridBagLayout per un layout flessibile
         JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // File CSV con pulsante Sfoglia
+        // File CSV
         gbc.gridx = 0; gbc.gridy = 0;
         mainPanel.add(new JLabel("File CSV:"), gbc);
         
-        // Panel per contenere il campo di testo e il pulsante
+        // Panel per contenere il campo di testo e il pulsante Sfoglia
         JPanel filePanel = new JPanel(new BorderLayout(5, 0));
         csvPathField = new JTextField(20);
-        csvPathField.setEditable(false); // Lo rendiamo non editabile manualmente
+        csvPathField.setEditable(false);
         filePanel.add(csvPathField, BorderLayout.CENTER);
         
         JButton sfogliaButton = new JButton("Sfoglia");
@@ -62,24 +62,33 @@ public class SwingView extends JFrame {
 
         // Data inizio
         gbc.gridx = 0; gbc.gridy = 1;
-        mainPanel.add(new JLabel("Data inizio (YYYY-MM-DD):"), gbc);
+        mainPanel.add(new JLabel("Data inizio:"), gbc);
         gbc.gridx = 1;
-        dataInizioField = new JTextField(10);
-        mainPanel.add(dataInizioField, gbc);
+        dataInizioChooser = new JDateChooser();
+        dataInizioChooser.setDateFormatString("dd/MM/yyyy");
+        dataInizioChooser.setDate(new Date()); // Data corrente come default
+        mainPanel.add(dataInizioChooser, gbc);
 
         // Data fine
         gbc.gridx = 0; gbc.gridy = 2;
-        mainPanel.add(new JLabel("Data fine (YYYY-MM-DD):"), gbc);
+        mainPanel.add(new JLabel("Data fine:"), gbc);
         gbc.gridx = 1;
-        dataFineField = new JTextField(10);
-        mainPanel.add(dataFineField, gbc);
+        dataFineChooser = new JDateChooser();
+        dataFineChooser.setDateFormatString("dd/MM/yyyy");
+        dataFineChooser.setDate(new Date()); // Data corrente come default
+        mainPanel.add(dataFineChooser, gbc);
 
         // Giorni settimana
         gbc.gridx = 0; gbc.gridy = 3;
-        mainPanel.add(new JLabel("Giorni settimana (1-7, separati da virgola):"), gbc);
+        mainPanel.add(new JLabel("Giorni settimana:"), gbc);
         gbc.gridx = 1;
-        giorniSettimanaField = new JTextField(15);
-        mainPanel.add(giorniSettimanaField, gbc);
+        JPanel giorniPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        String[] giorniNomi = {"Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"};
+        for (int i = 0; i < 7; i++) {
+            giorniCheckBox[i] = new JCheckBox(giorniNomi[i]);
+            giorniPanel.add(giorniCheckBox[i]);
+        }
+        mainPanel.add(giorniPanel, gbc);
 
         // Date da non pianificare
         gbc.gridx = 0; gbc.gridy = 4;
@@ -115,7 +124,6 @@ public class SwingView extends JFrame {
         setLocationRelativeTo(null);
     }
 
-
     private void mostraFileChooser() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Seleziona file CSV");
@@ -148,27 +156,32 @@ public class SwingView extends JFrame {
         dialog.setLayout(new GridLayout(3, 2, 5, 5));
 
         JTextField nomeField = new JTextField(15);
-        JTextField dataField = new JTextField(10);
+        JDateChooser dataChooser = new JDateChooser();
+        dataChooser.setDateFormatString("dd/MM/yyyy");
 
         dialog.add(new JLabel("Nome e Cognome:"));
         dialog.add(nomeField);
-        dialog.add(new JLabel("Data (YYYY-MM-DD):"));
-        dialog.add(dataField);
+        dialog.add(new JLabel("Data:"));
+        dialog.add(dataChooser);
 
         JButton confermaButton = new JButton("Conferma");
         confermaButton.addActionListener(e -> {
-            try {
-                Persona persona = new Persona(nomeField.getText());
-                LocalDate data = LocalDate.parse(dataField.getText());
-                assenze.add(new Assenza(persona, data));
-                outputArea.append("Aggiunta assenza: " + persona.getNomeECognome() + 
-                                " il " + data + "\n");
-                dialog.dispose();
-            } catch (DateTimeParseException ex) {
+            if (dataChooser.getDate() == null) {
                 JOptionPane.showMessageDialog(dialog, 
-                    "Formato data non valido. Usa YYYY-MM-DD",
+                    "Seleziona una data",
                     "Errore", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+
+            Persona persona = new Persona(nomeField.getText());
+            LocalDate data = dataChooser.getDate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+            
+            assenze.add(new Assenza(persona, data));
+            outputArea.append("Aggiunta assenza: " + persona.getNomeECognome() + 
+                            " il " + data + "\n");
+            dialog.dispose();
         });
 
         JButton annullaButton = new JButton("Annulla");
@@ -189,21 +202,36 @@ public class SwingView extends JFrame {
                 throw new IllegalArgumentException("Il percorso del file CSV è obbligatorio");
             }
 
+            if (dataInizioChooser.getDate() == null || dataFineChooser.getDate() == null) {
+                throw new IllegalArgumentException("Le date di inizio e fine sono obbligatorie");
+            }
+
             // Leggi il file CSV
             List<Incarico> incarichi = LettoreCSV.leggiIncarichi(csvPathField.getText());
             
-            // Parsing date inizio/fine
-            LocalDate dataInizio = LocalDate.parse(dataInizioField.getText());
-            LocalDate dataFine = LocalDate.parse(dataFineField.getText());
+            // Conversione da Date a LocalDate
+            LocalDate dataInizio = dataInizioChooser.getDate().toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate dataFine = dataFineChooser.getDate().toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
             
             if (dataInizio.isAfter(dataFine)) {
                 throw new IllegalArgumentException("La data di inizio deve essere precedente alla data di fine");
             }
             
-            // Parsing giorni della settimana usando ParserUtils
-            Set<DayOfWeek> giorniSet = ParserUtils.parseGiorniSettimana(giorniSettimanaField.getText());
+            // Parsing giorni della settimana usando i JCheckBox
+            Set<java.time.DayOfWeek> giorniSet = new java.util.HashSet<>();
+            for (int i = 0; i < 7; i++) {
+                if (giorniCheckBox[i].isSelected()) {
+                    // DayOfWeek.of(1) = LUNEDI, ... DayOfWeek.of(7) = DOMENICA
+                    giorniSet.add(java.time.DayOfWeek.of(i + 1));
+                }
+            }
             if (giorniSet.isEmpty()) {
-                throw new IllegalArgumentException("Specificare almeno un giorno della settimana");
+                // Se nessun giorno selezionato, usa tutti
+                for (int i = 1; i <= 7; i++) {
+                    giorniSet.add(java.time.DayOfWeek.of(i));
+                }
             }
             
             // Parsing delle date da non pianificare usando ParserUtils
@@ -277,10 +305,6 @@ public class SwingView extends JFrame {
                 }
             }
 
-        } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(this,
-                "Formato data non valido. Usa YYYY-MM-DD",
-                "Errore", JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(this,
                 e.getMessage(),
@@ -289,7 +313,7 @@ public class SwingView extends JFrame {
             JOptionPane.showMessageDialog(this,
                 "Errore durante la pianificazione: " + e.getMessage(),
                 "Errore", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace(); // Utile per debug
+            e.printStackTrace();
         }
     }
 
