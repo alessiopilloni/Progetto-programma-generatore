@@ -2,7 +2,6 @@ package view;
 
 import model.*;
 import utils.CostruttoreCalendario;
-import utils.ParserUtils;
 import io.LettoreCSV;
 import javax.swing.*;
 import java.awt.*;
@@ -22,11 +21,17 @@ public class SwingView extends JFrame {
     private JDateChooser dataInizioChooser;
     private JDateChooser dataFineChooser;
     private JCheckBox[] giorniCheckBox = new JCheckBox[7];
-    private JTextField dateDaNonPianificareField;
+    private JDateChooser dateChooserNonPianificare;
+    private DefaultListModel<String> dateListModel;
+    private JList<String> dateList;
+    private JButton addDateButton;
+    private JButton removeDateButton;
     private JTextArea outputArea;
     private List<Assenza> assenze;
     private JButton aggiungiAssenzaButton;
     private JButton pianificaButton;
+    private JButton creaProgrammaButton;
+    private Pianificazione ultimaPianificazione; // Per memorizzare l'ultima pianificazione eseguita
 
     public SwingView() {
         assenze = new ArrayList<>();
@@ -92,26 +97,49 @@ public class SwingView extends JFrame {
 
         // Date da non pianificare
         gbc.gridx = 0; gbc.gridy = 4;
-        mainPanel.add(new JLabel("Date da non pianificare (YYYY-MM-DD, separati da virgola):"), gbc);
+        mainPanel.add(new JLabel("Date da non pianificare:"), gbc);
+
         gbc.gridx = 1;
-        dateDaNonPianificareField = new JTextField(15);
-        mainPanel.add(dateDaNonPianificareField, gbc);
+        dateChooserNonPianificare = new JDateChooser();
+        dateChooserNonPianificare.setDateFormatString("yyyy-MM-dd");
+        mainPanel.add(dateChooserNonPianificare, gbc);
+
+        gbc.gridx = 2;
+        addDateButton = new JButton("Aggiungi");
+        mainPanel.add(addDateButton, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 5;
+        dateListModel = new DefaultListModel<>();
+        dateList = new JList<>(dateListModel);
+        dateList.setVisibleRowCount(3);
+        dateList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        mainPanel.add(new JScrollPane(dateList), gbc);
+
+        gbc.gridx = 2; gbc.gridy = 5;
+        removeDateButton = new JButton("Rimuovi");
+        mainPanel.add(removeDateButton, gbc);
 
         // Bottone Assenze
-        gbc.gridx = 0; gbc.gridy = 5;
+        gbc.gridx = 0; gbc.gridy = 6;
         gbc.gridwidth = 2;
         aggiungiAssenzaButton = new JButton("Aggiungi Assenza");
         aggiungiAssenzaButton.addActionListener(e -> mostraDialogAssenza());
         mainPanel.add(aggiungiAssenzaButton, gbc);
 
         // Bottone Pianifica
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         pianificaButton = new JButton("Pianifica");
         pianificaButton.addActionListener(e -> eseguiPianificazione());
         mainPanel.add(pianificaButton, gbc);
 
+        // Bottone Crea Programma
+        gbc.gridy = 9;
+        creaProgrammaButton = new JButton("Crea Programma");
+        creaProgrammaButton.addActionListener(e -> creaProgramma());
+        mainPanel.add(creaProgrammaButton, gbc);
+
         // Area output
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         outputArea = new JTextArea(10, 40);
@@ -122,6 +150,24 @@ public class SwingView extends JFrame {
         add(mainPanel, BorderLayout.CENTER);
         pack();
         setLocationRelativeTo(null);
+
+        // Listener per aggiunta data
+        addDateButton.addActionListener(e -> {
+            Date selectedDate = dateChooserNonPianificare.getDate();
+            if (selectedDate != null) {
+                String dateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
+                if (!dateListModel.contains(dateStr)) {
+                    dateListModel.addElement(dateStr);
+                }
+            }
+        });
+        // Listener per rimozione data
+        removeDateButton.addActionListener(e -> {
+            int selectedIdx = dateList.getSelectedIndex();
+            if (selectedIdx != -1) {
+                dateListModel.remove(selectedIdx);
+            }
+        });
     }
 
     private void mostraFileChooser() {
@@ -234,10 +280,11 @@ public class SwingView extends JFrame {
                 }
             }
             
-            // Parsing delle date da non pianificare usando ParserUtils
-            List<LocalDate> dateDaNonPianificare = ParserUtils.parseDateDaNonPianificare(
-                dateDaNonPianificareField.getText()
-            );
+            // Recupera le date da non pianificare dalla lista
+            List<LocalDate> dateDaNonPianificare = new ArrayList<>();
+            for (int i = 0; i < dateListModel.size(); i++) {
+                dateDaNonPianificare.add(LocalDate.parse(dateListModel.get(i)));
+            }
 
             // Costruisci il calendario
             Calendario calendario = CostruttoreCalendario.costruisciCalendarioVuoto(
@@ -249,6 +296,7 @@ public class SwingView extends JFrame {
 
             // Crea e esegui la pianificazione
             Pianificazione pianificazione = new Pianificazione(incarichi, calendario, assenze);
+            this.ultimaPianificazione = pianificazione; // Salva l'ultima pianificazione
             
             // Pulisci l'area di output
             outputArea.setText("");
@@ -312,6 +360,29 @@ public class SwingView extends JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                 "Errore durante la pianificazione: " + e.getMessage(),
+                "Errore", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void creaProgramma() {
+        if (ultimaPianificazione == null) {
+            JOptionPane.showMessageDialog(this,
+                "Esegui prima la pianificazione!",
+                "Errore", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try {
+            List<Assegnazione> assegnazioni = ultimaPianificazione.getAssegnazioni();
+            List<Incarico> incarichi = ultimaPianificazione.getIncarichi();
+            io.ScrittoreProgrammaIncarichi scrittore = new io.ScrittoreProgrammaIncarichi();
+            scrittore.scriviFileCsv(assegnazioni, incarichi);
+            JOptionPane.showMessageDialog(this,
+                "Programma incarichi creato con successo!",
+                "Successo", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Errore durante la creazione del programma: " + e.getMessage(),
                 "Errore", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
