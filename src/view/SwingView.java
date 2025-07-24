@@ -1,8 +1,6 @@
 package view;
 
 import model.*;
-import utils.CostruttoreCalendario;
-import io.LettoreCSV;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -15,6 +13,7 @@ import java.util.Set;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Date;
+import controller.AppController;
 
 public class SwingView extends JFrame {
     private JTextField csvPathField;
@@ -27,17 +26,14 @@ public class SwingView extends JFrame {
     private JButton addDateButton;
     private JButton removeDateButton;
     private JTextArea outputArea;
-    private List<Assenza> assenze;
     private JButton aggiungiAssenzaButton;
     private JButton pianificaButton;
     private JButton creaProgrammaButton;
-    private Pianificazione ultimaPianificazione; // Per memorizzare l'ultima pianificazione eseguita
-    private List<Incarico> incarichi; // Lista incarichi caricati
     private JButton resetButton;
+    private AppController controller;
 
     public SwingView() {
-        assenze = new ArrayList<>();
-        incarichi = new ArrayList<>();
+        controller = new AppController();
         setupUI();
     }
 
@@ -194,9 +190,7 @@ public class SwingView extends JFrame {
         dateChooserNonPianificare.setDate(null);
         dateListModel.clear();
         outputArea.setText("");
-        assenze.clear();
-        incarichi.clear();
-        ultimaPianificazione = null;
+        controller.reset();
     }
 
     private void mostraFileChooser() {
@@ -224,10 +218,10 @@ public class SwingView extends JFrame {
             File selectedFile = fileChooser.getSelectedFile();
             csvPathField.setText(selectedFile.getAbsolutePath());
             try {
-                this.incarichi = LettoreCSV.leggiIncarichi(selectedFile.getAbsolutePath());
+                controller.caricaIncarichi(selectedFile.getAbsolutePath());
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Errore nel caricamento del CSV: " + ex.getMessage());
-                this.incarichi = new ArrayList<>();
+                controller.reset();
             }
         }
     }
@@ -238,7 +232,7 @@ public class SwingView extends JFrame {
 
         // Estrai tutti i nomi unici delle persone dagli incarichi
         java.util.Set<String> nomiPersone = new java.util.LinkedHashSet<>();
-        for (Incarico inc : incarichi) {
+        for (Incarico inc : controller.getIncarichi()) {
             for (Persona p : inc.getLista()) {
                 nomiPersone.add(p.getNomeECognome());
             }
@@ -265,7 +259,7 @@ public class SwingView extends JFrame {
             LocalDate data = dataChooser.getDate().toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
-            assenze.add(new Assenza(persona, data));
+            controller.aggiungiAssenza(new Assenza(persona, data));
             outputArea.append("Aggiunta assenza: " + persona.getNomeECognome() + 
                             " il " + data + "\n");
             dialog.dispose();
@@ -292,9 +286,6 @@ public class SwingView extends JFrame {
                 throw new IllegalArgumentException("Le date di inizio e fine sono obbligatorie");
             }
             // Leggi il file CSV
-            this.incarichi = LettoreCSV.leggiIncarichi(csvPathField.getText());
-            
-            // Conversione da Date a LocalDate
             LocalDate dataInizio = dataInizioChooser.getDate().toInstant()
                 .atZone(ZoneId.systemDefault()).toLocalDate();
             LocalDate dataFine = dataFineChooser.getDate().toInstant()
@@ -326,28 +317,21 @@ public class SwingView extends JFrame {
             }
 
             // Costruisci il calendario
-            Calendario calendario = CostruttoreCalendario.costruisciCalendarioVuoto(
-                dataInizio, 
-                dataFine, 
-                giorniSet,
-                dateDaNonPianificare
-            );
-
-            // Crea e esegui la pianificazione
-            Pianificazione pianificazione = new Pianificazione(incarichi, calendario, assenze);
-            this.ultimaPianificazione = pianificazione; // Salva l'ultima pianificazione
+            Pianificazione pianificazione = controller.pianifica(dataInizio, dataFine, giorniSet, dateDaNonPianificare);
             
             // Pulisci l'area di output
             outputArea.setText("");
             
             // Mostra le date pianificate
             outputArea.append("Date pianificate:\n");
-            for (LocalDate data : calendario.getDate()) {
+            List<LocalDate> datePianificate = pianificazione.getDatePianificate();
+            for (LocalDate data : datePianificate) {
                 outputArea.append(data.toString() + "\n");
             }
             
             // Mostra le assenze registrate
             outputArea.append("\nAssenze registrate:\n");
+            List<Assenza> assenze = controller.getAssenze();
             if (assenze.isEmpty()) {
                 outputArea.append("Nessuna assenza registrata\n");
             } else {
@@ -369,10 +353,6 @@ public class SwingView extends JFrame {
 
             // Esegui la pianificazione
             outputArea.append("\nPianificazione in corso...\n");
-            pianificazione.pianifica();
-            
-            // Mostra i risultati
-            outputArea.append("\nRisultati della pianificazione:\n");
             List<Assegnazione> assegnazioni = pianificazione.getAssegnazioni();
             Map<LocalDate, List<Assegnazione>> assegnazioniPerData = new TreeMap<>();
             
@@ -405,20 +385,15 @@ public class SwingView extends JFrame {
     }
 
     private void creaProgramma() {
-        if (ultimaPianificazione == null) {
-            JOptionPane.showMessageDialog(this,
-                "Esegui prima la pianificazione!",
-                "Errore", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
         try {
-            List<Assegnazione> assegnazioni = ultimaPianificazione.getAssegnazioni();
-            List<Incarico> incarichi = ultimaPianificazione.getIncarichi();
-            io.ScrittoreProgrammaIncarichi scrittore = new io.ScrittoreProgrammaIncarichi();
-            scrittore.scriviFileCsv(assegnazioni, incarichi);
+            controller.creaProgramma();
             JOptionPane.showMessageDialog(this,
                 "Programma incarichi creato con successo!",
                 "Successo", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IllegalStateException e) {
+            JOptionPane.showMessageDialog(this,
+                "Esegui prima la pianificazione!",
+                "Errore", JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                 "Errore durante la creazione del programma: " + e.getMessage(),

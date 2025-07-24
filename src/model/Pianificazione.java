@@ -117,5 +117,9 @@ public class Pianificazione {
         return new ArrayList<>(incarichi);
     }
 
+    public List<LocalDate> getDatePianificate() {
+        return new ArrayList<>(dateSelezionate);
+    }
+
 
 }
