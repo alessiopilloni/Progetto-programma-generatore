@@ -6,6 +6,7 @@ import utils.ParserUtils;
 import io.LettoreCSV;
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.time.LocalDate;
 import java.time.DayOfWeek;
 import java.time.format.DateTimeParseException;
@@ -42,12 +43,22 @@ public class SwingView extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // File CSV
+        // File CSV con pulsante Sfoglia
         gbc.gridx = 0; gbc.gridy = 0;
-        mainPanel.add(new JLabel("Percorso file CSV:"), gbc);
-        gbc.gridx = 1;
+        mainPanel.add(new JLabel("File CSV:"), gbc);
+        
+        // Panel per contenere il campo di testo e il pulsante
+        JPanel filePanel = new JPanel(new BorderLayout(5, 0));
         csvPathField = new JTextField(20);
-        mainPanel.add(csvPathField, gbc);
+        csvPathField.setEditable(false); // Lo rendiamo non editabile manualmente
+        filePanel.add(csvPathField, BorderLayout.CENTER);
+        
+        JButton sfogliaButton = new JButton("Sfoglia");
+        sfogliaButton.addActionListener(e -> mostraFileChooser());
+        filePanel.add(sfogliaButton, BorderLayout.EAST);
+        
+        gbc.gridx = 1;
+        mainPanel.add(filePanel, gbc);
 
         // Data inizio
         gbc.gridx = 0; gbc.gridy = 1;
@@ -102,6 +113,34 @@ public class SwingView extends JFrame {
         add(mainPanel, BorderLayout.CENTER);
         pack();
         setLocationRelativeTo(null);
+    }
+
+
+    private void mostraFileChooser() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Seleziona file CSV");
+        
+        // Aggiungiamo un filtro per i file CSV
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.isDirectory() || f.getName().toLowerCase().endsWith(".csv");
+            }
+
+            @Override
+            public String getDescription() {
+                return "File CSV (*.csv)";
+            }
+        });
+
+        // Mostra la finestra di dialogo
+        int result = fileChooser.showOpenDialog(this);
+        
+        // Se l'utente ha selezionato un file e premuto OK
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            csvPathField.setText(selectedFile.getAbsolutePath());
+        }
     }
 
     private void mostraDialogAssenza() {
