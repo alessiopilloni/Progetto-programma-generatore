@@ -190,8 +190,12 @@ public class SwingView extends JFrame {
             Date inizio = dataInizioChooser.getDate();
             Date fine = dataFineChooser.getDate();
             if (selectedDate != null && inizio != null && fine != null) {
-                if (!selectedDate.before(inizio) && !selectedDate.after(fine)) {
-                    String dateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
+                LocalDate selectedLocalDate = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate inizioLocalDate = inizio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate fineLocalDate = fine.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                if ((selectedLocalDate.isEqual(inizioLocalDate) || selectedLocalDate.isAfter(inizioLocalDate)) &&
+                    (selectedLocalDate.isEqual(fineLocalDate) || selectedLocalDate.isBefore(fineLocalDate))) {
+                    String dateStr = selectedLocalDate.toString();
                     if (!dateListModel.contains(dateStr)) {
                         dateListModel.addElement(dateStr);
                     }
