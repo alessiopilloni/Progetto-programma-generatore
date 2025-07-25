@@ -12,8 +12,8 @@ public class ScrittoreProgrammaIncarichi {
     // Sarà una tabella in cui ogni prima riga è un incarico e ogni prima colonna è una data.
     // Ogni cella conterrà la persona assegnata al corrispondente incarico e data.
 
-    public void scriviFileCsv(List<Assegnazione> assegnazioni, List<Incarico> incarichi) {
-        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter("Programma Incarichi.csv"))) {
+    public void scriviFileCsv(List<Assegnazione> assegnazioni, List<Incarico> incarichi, String outputPath) {
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(outputPath))) {
             // Scrivi l'intestazione
             writer.write("Programma Incarichi\n\n");
             // Scrivi la prima riga: Data,Incarico1,Incarico2,...

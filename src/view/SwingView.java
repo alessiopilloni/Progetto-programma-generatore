@@ -31,6 +31,7 @@ public class SwingView extends JFrame {
     private JButton creaProgrammaButton;
     private JButton resetButton;
     private AppController controller;
+    private JTextField outputPathField;
 
     public SwingView() {
         controller = new AppController();
@@ -135,22 +136,25 @@ public class SwingView extends JFrame {
         pianificaButton.addActionListener(e -> eseguiPianificazione());
         mainPanel.add(pianificaButton, gbc);
 
-        // Bottone Crea Programma
-        gbc.gridy = 9;
+        // Output file + Crea Programma (affiancati)
+        gbc.gridx = 0; gbc.gridy = 11;
+        mainPanel.add(new JLabel("File di output:"), gbc);
+        JPanel outputPanel = new JPanel(new BorderLayout(5, 0));
+        outputPathField = new JTextField(20);
+        outputPathField.setEditable(false);
+        outputPanel.add(outputPathField, BorderLayout.CENTER);
+        JButton scegliOutputButton = new JButton("Scegli file");
+        scegliOutputButton.addActionListener(e -> mostraOutputFileChooser());
+        outputPanel.add(scegliOutputButton, BorderLayout.EAST);
+        // Pannello per output + crea programma affiancati
+        JPanel outputAndSavePanel = new JPanel(new BorderLayout(5, 0));
+        outputAndSavePanel.add(outputPanel, BorderLayout.CENTER);
         creaProgrammaButton = new JButton("Crea Programma");
+        creaProgrammaButton.setEnabled(false); // Disabilitato di default
         creaProgrammaButton.addActionListener(e -> creaProgramma());
-        mainPanel.add(creaProgrammaButton, gbc);
-
-        // Bottone Reset
-        gbc.gridy = 10;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
-        resetButton = new JButton("Reset");
-        resetButton.addActionListener(e -> resetFields());
-        mainPanel.add(resetButton, gbc);
-        gbc.gridwidth = 1;
-
-        // Reset: pulisce tutti i campi, pulisce l'output e pulisce la lista delle date e le assenze
+        outputAndSavePanel.add(creaProgrammaButton, BorderLayout.EAST);
+        gbc.gridx = 1;
+        mainPanel.add(outputAndSavePanel, gbc);
 
         // Area output
         gbc.gridy = 8;
@@ -158,12 +162,20 @@ public class SwingView extends JFrame {
         gbc.gridwidth = 3; // Occupa tutta la larghezza
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        // Area output per mostrare i risultati della pianificazione
         outputArea = new JTextArea(10, 40); // dimensioni più ragionevoli
         outputArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(outputArea);
         mainPanel.add(scrollPane, gbc);
         gbc.gridwidth = 1; // Ripristina il valore di default
+
+        // Bottone Reset in fondo
+        gbc.gridy = 12;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        resetButton = new JButton("Reset");
+        resetButton.addActionListener(e -> resetFields());
+        mainPanel.add(resetButton, gbc);
+        gbc.gridwidth = 1;
 
         add(mainPanel, BorderLayout.CENTER);
         pack();
@@ -224,6 +236,7 @@ public class SwingView extends JFrame {
         dateListModel.clear();
         outputArea.setText("");
         controller.reset();
+        creaProgrammaButton.setEnabled(false); // Disabilita il bottone di salvataggio
     }
 
     private void mostraFileChooser() {
@@ -409,7 +422,8 @@ public class SwingView extends JFrame {
                                    " -> " + a.getPersona().getNomeECognome() + "\n");
                 }
             }
-
+            // Abilita il bottone di salvataggio solo dopo pianificazione valida
+            creaProgrammaButton.setEnabled(true);
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(this,
                 e.getMessage(),
@@ -422,12 +436,36 @@ public class SwingView extends JFrame {
         }
     }
 
+    private void mostraOutputFileChooser() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Scegli dove salvare il programma incarichi");
+        fileChooser.setSelectedFile(new File("Programma Incarichi.csv"));
+        int result = fileChooser.showSaveDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            // Forza estensione .csv
+            String path = selectedFile.getAbsolutePath();
+            if (!path.toLowerCase().endsWith(".csv")) {
+                path += ".csv";
+            }
+            outputPathField.setText(path);
+        }
+    }
+
     private void creaProgramma() {
         try {
-            controller.creaProgramma();
+            String outputPath = outputPathField.getText().trim();
+            if (outputPath.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "Seleziona prima il file di output!",
+                    "Errore", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            controller.creaProgramma(outputPath);
             JOptionPane.showMessageDialog(this,
                 "Programma incarichi creato con successo!",
                 "Successo", JOptionPane.INFORMATION_MESSAGE);
+            creaProgrammaButton.setEnabled(false); // Disabilita dopo il salvataggio
         } catch (IllegalStateException e) {
             JOptionPane.showMessageDialog(this,
                 "Esegui prima la pianificazione!",

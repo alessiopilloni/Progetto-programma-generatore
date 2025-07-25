@@ -45,9 +45,9 @@ public class AppController {
         return ultimaPianificazione;
     }
 
-    public void creaProgramma() throws Exception {
+    public void creaProgramma(String outputPath) throws Exception {
         if (ultimaPianificazione == null) throw new IllegalStateException("Nessuna pianificazione eseguita");
         ScrittoreProgrammaIncarichi scrittore = new ScrittoreProgrammaIncarichi();
-        scrittore.scriviFileCsv(ultimaPianificazione.getAssegnazioni(), ultimaPianificazione.getIncarichi());
+        scrittore.scriviFileCsv(ultimaPianificazione.getAssegnazioni(), ultimaPianificazione.getIncarichi(), outputPath);
     }
 } 
