@@ -2,7 +2,7 @@
 
 Un'applicazione Java per la generazione automatica di pianificazioni di incarichi, tenendo conto delle disponibilità delle persone e gestendo le assenze.
 
-## Funzionalità
+## Funzionalità principali
 
 - Lettura degli incarichi da file CSV
 - Pianificazione automatica degli incarichi
@@ -15,13 +15,14 @@ Un'applicazione Java per la generazione automatica di pianificazioni di incarich
 
 ```
 src/
-├── AppController.java
+├── Main.java
+├── controller/
+│   └── AppController.java
 ├── engine/
-│   └── MotorePianificazione.java
+│   └── GestoreAssenze.java
 ├── io/
 │   ├── LettoreCSV.java
-│   └── ScrittorePianificazione.java
-├── Main.java
+│   └── ScrittoreProgrammaIncarichi.java
 ├── model/
 │   ├── Assegnazione.java
 │   ├── Assenza.java
@@ -33,23 +34,25 @@ src/
 ├── stats/
 │   └── StatisticheIncarichi.java
 ├── utils/
-│   └── CostruttoreCalendario.java
+│   ├── CostruttoreCalendario.java
+│   └── ParserUtils.java
 └── view/
-    └── ConsoleView.java
+    ├── ConsoleView.java
+    └── SwingView.java
 ```
 
-## Come Utilizzare
+## Come utilizzare
 
-1. Preparare un file CSV con gli incarichi nel formato richiesto
-2. Eseguire l'applicazione
-3. Seguire le istruzioni a schermo per:
+1. Prepara un file CSV con gli incarichi nel formato richiesto (vedi esempio sotto)
+2. Esegui l'applicazione tramite `Main.java` oppure utilizzando il JAR generato
+3. Segui le istruzioni a schermo per:
    - Specificare il percorso del file CSV
    - Inserire il periodo di pianificazione (data inizio e fine)
    - Selezionare i giorni della settimana da pianificare
    - Inserire eventuali date da escludere
    - Gestire le assenze delle persone
 
-## Formato File CSV
+## Formato del file CSV degli incarichi
 
 Il file degli incarichi deve essere strutturato nel seguente formato:
 ```csv
@@ -65,29 +68,44 @@ Incarico,Persona1,Persona2,...
 
 ## Architettura
 
-Il progetto segue una struttura MVC (Model-View-Controller) modificata:
+Il progetto segue una struttura MVC (Model-View-Controller) estesa:
 
-- **Model**: Gestisce i dati e la logica di business
-- **View**: Gestisce l'interfaccia utente tramite console
-- **Engine**: Contiene la logica di pianificazione
-- **Utils**: Fornisce utility per la gestione del calendario
-- **IO**: Gestisce input/output da file
-- **Stats**: Elabora statistiche sulle assegnazioni
+- **Model**: Gestione dati e logica di business
+- **View**: Interfaccia utente (console e Swing)
+- **Controller**: Coordinamento tra view e model
+- **Engine**: Logica di pianificazione e gestione assenze
+- **Utils**: Utility per la gestione del calendario e parsing
+- **IO**: Input/output da e verso file
+- **Stats**: Statistiche sulle assegnazioni
 
 ## Pattern di Design Utilizzati
 
 - **MVC**: Separazione tra dati, logica e presentazione
 - **Factory**: Per la creazione di oggetti complessi
 - **Single Responsibility**: Ogni classe ha una singola responsabilità
-- **Dependency Injection**: Per gestire le dipendenze tra componenti
+- **Dependency Injection**: Gestione delle dipendenze tra componenti
 
 ## Contribuire
 
 Per contribuire al progetto:
-1. Fare un fork del repository
-2. Creare un branch per le modifiche
-3. Inviare una pull request con le modifiche proposte
+1. Effettua un fork del repository
+2. Crea un branch per le modifiche
+3. Invia una pull request con le modifiche proposte
 
 ## Licenza
 
-[Specificare la licenza del progetto] 
+Copyright (c) 2025 Alessio Pilloni
+
+Il presente software è rilasciato con una licenza aperta che permette a chiunque di:
+
+- Scaricare e usare il codice liberamente
+- Modificare, adattare o integrare il codice per uso personale o commerciale
+- Ridistribuire il codice originale o modificato
+
+A CONDIZIONE CHE:
+
+1. **Attribuzione**: Ogni copia, modifica o fork del presente software deve contenere un riconoscimento visibile e chiaro di tutti i collaboratori originali del progetto, come indicato nel file `CONTRIBUTORS.md` o simile.
+2. **Trasparenza**: Qualsiasi versione modificata del software deve riportare le modifiche effettuate e mantenere la cronologia dei contributi, laddove possibile.
+3. **Nessuna garanzia**: Il software è fornito "così com'è", senza alcuna garanzia espressa o implicita. L'autore e i collaboratori non sono responsabili per eventuali danni derivanti dall'uso del software.
+
+---
