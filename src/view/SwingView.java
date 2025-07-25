@@ -150,14 +150,16 @@ public class SwingView extends JFrame {
 
         // Area output
         gbc.gridy = 8;
+        gbc.gridx = 0;
+        gbc.gridwidth = 3; // Occupa tutta la larghezza
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         // Area output per mostrare i risultati della pianificazione
-        // Le dimensioni sono impostate in modo che l'area di output sia full screen
-        outputArea = new JTextArea(100, 100);
+        outputArea = new JTextArea(10, 40); // dimensioni più ragionevoli
         outputArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(outputArea);
         mainPanel.add(scrollPane, gbc);
+        gbc.gridwidth = 1; // Ripristina il valore di default
 
         add(mainPanel, BorderLayout.CENTER);
         pack();
