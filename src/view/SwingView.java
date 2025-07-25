@@ -111,9 +111,11 @@ public class SwingView extends JFrame {
         gbc.gridx = 1; gbc.gridy = 5;
         dateListModel = new DefaultListModel<>();
         dateList = new JList<>(dateListModel);
-        dateList.setVisibleRowCount(3);
+        dateList.setVisibleRowCount(10);
         dateList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        mainPanel.add(new JScrollPane(dateList), gbc);
+        JScrollPane dateListScrollPane = new JScrollPane(dateList);
+        dateListScrollPane.setPreferredSize(new Dimension(150, 160)); // larghezza e altezza fissa per 10 righe
+        mainPanel.add(dateListScrollPane, gbc);
 
         gbc.gridx = 2; gbc.gridy = 5;
         removeDateButton = new JButton("Rimuovi");
