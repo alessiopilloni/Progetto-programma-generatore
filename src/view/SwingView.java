@@ -229,6 +229,11 @@ public class SwingView extends JFrame {
     }
 
     private void mostraDialogAssenza() {
+        // Controllo se ci sono incarichi caricati
+        if (controller.getIncarichi().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Devi prima caricare un file CSV con gli incarichi!", "Errore", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         JDialog dialog = new JDialog(this, "Aggiungi Assenza", true);
         dialog.setLayout(new GridLayout(3, 2, 5, 5));
 
