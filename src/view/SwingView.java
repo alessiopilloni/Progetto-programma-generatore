@@ -105,6 +105,7 @@ public class SwingView extends JFrame {
 
         gbc.gridx = 2;
         addDateButton = new JButton("Aggiungi");
+        addDateButton.setEnabled(false); // Disabilitato di default
         mainPanel.add(addDateButton, gbc);
 
         gbc.gridx = 1; gbc.gridy = 5;
@@ -116,6 +117,7 @@ public class SwingView extends JFrame {
 
         gbc.gridx = 2; gbc.gridy = 5;
         removeDateButton = new JButton("Rimuovi");
+        removeDateButton.setEnabled(false); // Disabilitato di default
         mainPanel.add(removeDateButton, gbc);
 
         // Bottone Assenze
@@ -165,13 +167,34 @@ public class SwingView extends JFrame {
         pack();
         setLocationRelativeTo(null);
 
+        // Listener per abilitare/disabilitare i bottoni in base al range
+        java.beans.PropertyChangeListener rangeListener = evt -> {
+            boolean rangeValido = dataInizioChooser.getDate() != null && dataFineChooser.getDate() != null;
+            addDateButton.setEnabled(rangeValido && dateChooserNonPianificare.getDate() != null);
+            removeDateButton.setEnabled(rangeValido && !dateListModel.isEmpty());
+        };
+        dataInizioChooser.addPropertyChangeListener("date", rangeListener);
+        dataFineChooser.addPropertyChangeListener("date", rangeListener);
+        dateChooserNonPianificare.addPropertyChangeListener("date", rangeListener);
+        dateListModel.addListDataListener(new javax.swing.event.ListDataListener() {
+            public void intervalAdded(javax.swing.event.ListDataEvent e) { rangeListener.propertyChange(null); }
+            public void intervalRemoved(javax.swing.event.ListDataEvent e) { rangeListener.propertyChange(null); }
+            public void contentsChanged(javax.swing.event.ListDataEvent e) { rangeListener.propertyChange(null); }
+        });
+
         // Listener per aggiunta data
         addDateButton.addActionListener(e -> {
             Date selectedDate = dateChooserNonPianificare.getDate();
-            if (selectedDate != null) {
-                String dateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
-                if (!dateListModel.contains(dateStr)) {
-                    dateListModel.addElement(dateStr);
+            Date inizio = dataInizioChooser.getDate();
+            Date fine = dataFineChooser.getDate();
+            if (selectedDate != null && inizio != null && fine != null) {
+                if (!selectedDate.before(inizio) && !selectedDate.after(fine)) {
+                    String dateStr = new java.text.SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
+                    if (!dateListModel.contains(dateStr)) {
+                        dateListModel.addElement(dateStr);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "La data selezionata deve essere compresa nel range di date.", "Errore", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
