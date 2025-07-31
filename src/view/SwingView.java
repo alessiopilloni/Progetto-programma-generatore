@@ -158,10 +158,10 @@ public class SwingView extends JFrame {
         gbc.gridx = 1;
         mainPanel.add(outputAndSavePanel, gbc);
 
-        // Aggiungi pulsante per l'editor incarichi dopo il pulsante "Crea Programma"
-        // Correzione: aggiungi il pulsante "Editor Incarichi" al mainPanel invece che a buttonPanel (che non esiste)
-        gbc.gridx = 2;
-        gbc.gridy = 11;
+        // Aggiungi pulsante per l'editor incarichi a fianco al bottone reset
+        gbc.gridx = 0;
+        gbc.gridy = 12;
+        gbc.gridwidth = 1;
         JButton editorIncarichiButton = new JButton("Editor Incarichi");
         editorIncarichiButton.addActionListener(e -> apriEditorIncarichi());
         mainPanel.add(editorIncarichiButton, gbc);
@@ -178,14 +178,13 @@ public class SwingView extends JFrame {
         mainPanel.add(scrollPane, gbc);
         gbc.gridwidth = 1; // Ripristina il valore di default
 
-        // Bottone Reset in fondo
+        // Bottone Reset a fianco al bottone editor incarichi
         gbc.gridy = 12;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
+        gbc.gridx = 1;
+        gbc.gridwidth = 1;
         resetButton = new JButton("Reset");
         resetButton.addActionListener(e -> resetFields());
         mainPanel.add(resetButton, gbc);
-        gbc.gridwidth = 1;
 
         add(mainPanel, BorderLayout.CENTER);
         pack();
