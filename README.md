@@ -5,11 +5,13 @@ Un'applicazione Java per la generazione automatica di pianificazioni di incarich
 ## Funzionalità principali
 
 - Lettura degli incarichi da file CSV
+- **Editor degli incarichi con interfaccia grafica** - Modifica, aggiunta e rimozione di incarichi e persone
 - Pianificazione automatica degli incarichi
 - Gestione delle assenze
 - Selezione dei giorni della settimana da pianificare
 - Esclusione di date specifiche dalla pianificazione
 - Generazione di statistiche sugli incarichi assegnati
+- **Salvataggio degli incarichi modificati in formato CSV**
 
 ## Struttura del Progetto
 
@@ -19,9 +21,11 @@ src/
 ├── controller/
 │   └── AppController.java
 ├── engine/
-│   └── GestoreAssenze.java
+│   ├── GestoreAssenze.java
+│   └── GestoreIncarichi.java
 ├── io/
 │   ├── LettoreCSV.java
+│   ├── ScrittoreIncarichiCSV.java
 │   └── ScrittoreProgrammaIncarichi.java
 ├── model/
 │   ├── Assegnazione.java
@@ -38,6 +42,7 @@ src/
 │   └── ParserUtils.java
 └── view/
     ├── ConsoleView.java
+    ├── EditorIncarichiView.java
     └── SwingView.java
 ```
 
@@ -47,10 +52,25 @@ src/
 2. Esegui l'applicazione tramite `Main.java` oppure utilizzando il JAR generato
 3. Segui le istruzioni a schermo per:
    - Specificare il percorso del file CSV
+   - **Utilizzare l'editor degli incarichi per modificare incarichi e persone**
    - Inserire il periodo di pianificazione (data inizio e fine)
    - Selezionare i giorni della settimana da pianificare
    - Inserire eventuali date da escludere
    - Gestire le assenze delle persone
+
+## Editor degli Incarichi
+
+L'applicazione include un editor grafico per la gestione degli incarichi che permette di:
+
+- **Visualizzare** tutti gli incarichi e le persone associate
+- **Aggiungere** nuovi incarichi
+- **Rimuovere** incarichi esistenti
+- **Aggiungere** persone agli incarichi
+- **Rimuovere** persone dagli incarichi
+- **Salvare** le modifiche in formato CSV
+- **Caricare** file CSV esistenti
+
+L'editor fornisce un'interfaccia intuitiva con liste separate per incarichi e persone, facilitando la gestione dei dati.
 
 ## Formato del file CSV degli incarichi
 
@@ -71,11 +91,11 @@ Incarico,Persona1,Persona2,...
 Il progetto segue una struttura MVC (Model-View-Controller) estesa:
 
 - **Model**: Gestione dati e logica di business
-- **View**: Interfaccia utente (console e Swing)
+- **View**: Interfaccia utente (console, Swing e Editor incarichi)
 - **Controller**: Coordinamento tra view e model
-- **Engine**: Logica di pianificazione e gestione assenze
+- **Engine**: Logica di pianificazione, gestione assenze e gestione incarichi
 - **Utils**: Utility per la gestione del calendario e parsing
-- **IO**: Input/output da e verso file
+- **IO**: Input/output da e verso file (lettura CSV, scrittura incarichi e programma)
 - **Stats**: Statistiche sulle assegnazioni
 
 ## Pattern di Design Utilizzati
@@ -84,6 +104,7 @@ Il progetto segue una struttura MVC (Model-View-Controller) estesa:
 - **Factory**: Per la creazione di oggetti complessi
 - **Single Responsibility**: Ogni classe ha una singola responsabilità
 - **Dependency Injection**: Gestione delle dipendenze tra componenti
+- **Observer**: Per l'aggiornamento delle viste quando cambiano i dati
 
 ## Contribuire
 
