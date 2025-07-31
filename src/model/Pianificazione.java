@@ -6,22 +6,25 @@ import java.util.*;
 public class Pianificazione {
     private final List<Incarico> incarichi;
     private final List<Assegnazione> assegnazioni;
-    private final Map<Incarico, Integer> ultimoIndiceUsato;
     private final List<LocalDate> dateSelezionate;
     private final List<Assenza> assenze;
+    private final Map<Persona, Integer> contatoreUtilizzo;
 
     public Pianificazione(List<Incarico> incarichi, Calendario calendario, List<Assenza> assenze) {
         // Inizializzazione delle strutture dati
         this.incarichi = new ArrayList<>(incarichi);
         this.assegnazioni = new ArrayList<>();
-        this.ultimoIndiceUsato = new HashMap<>();
         this.dateSelezionate = calendario.getDate();
         this.assenze = new ArrayList<>(assenze);
+        this.contatoreUtilizzo = new HashMap<>();
         
-        // Inizializza gli indici per la rotazione
+        // Inizializza il contatore di utilizzo per tutte le persone
         for (Incarico inc : incarichi) {
-            ultimoIndiceUsato.put(inc, -1);
+            for (Persona p : inc.getLista()) {
+                contatoreUtilizzo.put(p, 0);
+            }
         }
+        
         // Mescoliamo le persone all'interno di ogni oggetto Incarico
         for (Incarico inc : this.incarichi) {
             inc.mescolaPersone(); // Dovremmo aggiungere questo metodo in Incarico.java
@@ -49,31 +52,32 @@ public class Pianificazione {
 
     /**
      * Trova la prossima persona disponibile per un incarico in una data
+     * Utilizza un algoritmo di selezione basato sul minor utilizzo
      */
     private Persona trovaProssimaPersonaDisponibile(Incarico incarico, LocalDate data) {
         int numeroPersone = incarico.getNumeroPersone();
-        // @param numeroPersone è il numero di persone disponibili per l'incarico
-        // Se il numero di persone disponibili è 0, restituisce null
         if (numeroPersone == 0) return null;
 
-        // Partiamo dall'ultimo indice usato + 1
-        int indiceCorrente = (ultimoIndiceUsato.get(incarico) + 1) % numeroPersone;
-        int tentativi = 0;
+        // Trova la persona con il minor numero di assegnazioni
+        Persona personaMenoUtilizzata = null;
+        int minUtilizzo = Integer.MAX_VALUE;
 
-        // Proviamo tutte le persone disponibili
-        while (tentativi < numeroPersone) {
-            Persona candidato = incarico.getPersona(indiceCorrente);
-            // Se la persona non è assente e non è già assegnata, restituisce la persona
+        for (int i = 0; i < numeroPersone; i++) {
+            Persona candidato = incarico.getPersona(i);
             if (!isPersonaAssente(candidato, data) && !isPersonaGiaAssegnata(candidato, data)) {
-                ultimoIndiceUsato.put(incarico, indiceCorrente);
-                return candidato;
+                int utilizzo = contatoreUtilizzo.getOrDefault(candidato, 0);
+                if (utilizzo < minUtilizzo) {
+                    minUtilizzo = utilizzo;
+                    personaMenoUtilizzata = candidato;
+                }
             }
-
-            indiceCorrente = (indiceCorrente + 1) % numeroPersone;
-            tentativi++;
         }
 
-        return null; // Nessuna persona disponibile trovata
+        if (personaMenoUtilizzata != null) {
+            contatoreUtilizzo.put(personaMenoUtilizzata, minUtilizzo + 1);
+        }
+
+        return personaMenoUtilizzata;
     }
 
     /**
@@ -104,6 +108,9 @@ public class Pianificazione {
                 }
             }
         }
+        
+        // Verifica la distribuzione alla fine della pianificazione
+        verificaDistribuzione();
     }
 
     /**
@@ -121,5 +128,32 @@ public class Pianificazione {
         return new ArrayList<>(dateSelezionate);
     }
 
+    /**
+     * Verifica e stampa la distribuzione delle assegnazioni per ogni incarico
+     */
+    public void verificaDistribuzione() {
+        System.out.println("\n=== VERIFICA DISTRIBUZIONE ===");
+        for (Incarico inc : incarichi) {
+            System.out.println("\nIncarico: " + inc.getIncarico());
+            for (Persona p : inc.getLista()) {
+                int utilizzo = contatoreUtilizzo.getOrDefault(p, 0);
+                System.out.println("  " + p.getNomeECognome() + ": " + utilizzo + " volte");
+            }
+        }
+    }
+
+    /**
+     * Restituisce il contatore di utilizzo per una persona specifica
+     */
+    public int getUtilizzoPersona(Persona persona) {
+        return contatoreUtilizzo.getOrDefault(persona, 0);
+    }
+
+    /**
+     * Restituisce la mappa completa del contatore di utilizzo
+     */
+    public Map<Persona, Integer> getContatoreUtilizzo() {
+        return new HashMap<>(contatoreUtilizzo);
+    }
 
 }
