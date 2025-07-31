@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Date;
 import controller.AppController;
+import model.Incarico;
+import model.Persona;
 
 public class SwingView extends JFrame {
     private JTextField csvPathField;
@@ -155,6 +157,14 @@ public class SwingView extends JFrame {
         outputAndSavePanel.add(creaProgrammaButton, BorderLayout.EAST);
         gbc.gridx = 1;
         mainPanel.add(outputAndSavePanel, gbc);
+
+        // Aggiungi pulsante per l'editor incarichi dopo il pulsante "Crea Programma"
+        // Correzione: aggiungi il pulsante "Editor Incarichi" al mainPanel invece che a buttonPanel (che non esiste)
+        gbc.gridx = 2;
+        gbc.gridy = 11;
+        JButton editorIncarichiButton = new JButton("Editor Incarichi");
+        editorIncarichiButton.addActionListener(e -> apriEditorIncarichi());
+        mainPanel.add(editorIncarichiButton, gbc);
 
         // Area output
         gbc.gridy = 8;
@@ -480,5 +490,44 @@ public class SwingView extends JFrame {
 
     public void mostraMessaggio(String messaggio) {
         outputArea.append(messaggio + "\n");
+    }
+
+    private void apriEditorIncarichi() {
+        try {
+            List<Incarico> incarichiCorrenti = controller.getIncarichi();
+            if (incarichiCorrenti.isEmpty()) {
+                // Se non ci sono incarichi caricati, prova a caricare dal file CSV se specificato
+                String csvPath = csvPathField.getText().trim();
+                if (!csvPath.isEmpty()) {
+                    controller.caricaIncarichi(csvPath);
+                    incarichiCorrenti = controller.getIncarichi();
+                }
+            }
+            
+            EditorIncarichiView editor = new EditorIncarichiView(incarichiCorrenti);
+            editor.setVisible(true);
+            
+            // Aggiungi un listener per quando l'editor viene chiuso
+            editor.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosed(java.awt.event.WindowEvent e) {
+                    // Aggiorna gli incarichi nel controller con quelli modificati
+                    List<Incarico> incarichiModificati = editor.getIncarichi();
+                    // Nota: questo richiederebbe un metodo setIncarichi nel controller
+                    // Per ora, ricarica dal file se è stato salvato
+                    String csvPath = csvPathField.getText().trim();
+                    if (!csvPath.isEmpty()) {
+                        try {
+                            controller.caricaIncarichi(csvPath);
+                            mostraMessaggio("Incarichi aggiornati. Ricarica il file CSV se necessario.");
+                        } catch (Exception ex) {
+                            mostraMessaggio("Errore nel ricaricare gli incarichi: " + ex.getMessage());
+                        }
+                    }
+                }
+            });
+        } catch (Exception e) {
+            mostraMessaggio("Errore nell'aprire l'editor incarichi: " + e.getMessage());
+        }
     }
 } 

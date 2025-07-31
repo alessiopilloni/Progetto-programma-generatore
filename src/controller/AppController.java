@@ -50,4 +50,68 @@ public class AppController {
         ScrittoreProgrammaIncarichi scrittore = new ScrittoreProgrammaIncarichi();
         scrittore.scriviFileCsv(ultimaPianificazione.getAssegnazioni(), ultimaPianificazione.getIncarichi(), outputPath);
     }
+
+    /**
+     * Aggiunge un nuovo incarico
+     * @param nomeIncarico Nome del nuovo incarico
+     * @throws IllegalArgumentException Se l'incarico esiste già
+     */
+    public void aggiungiIncarico(String nomeIncarico) {
+        incarichi = engine.GestoreIncarichi.aggiungiIncarico(incarichi, nomeIncarico);
+    }
+    
+    /**
+     * Rimuove un incarico esistente
+     * @param nomeIncarico Nome dell'incarico da rimuovere
+     * @throws IllegalArgumentException Se l'incarico non esiste
+     */
+    public void rimuoviIncarico(String nomeIncarico) {
+        incarichi = engine.GestoreIncarichi.rimuoviIncarico(incarichi, nomeIncarico);
+    }
+    
+    /**
+     * Aggiunge una persona a un incarico
+     * @param nomeIncarico Nome dell'incarico
+     * @param nomePersona Nome della persona da aggiungere
+     * @throws IllegalArgumentException Se l'incarico non esiste o la persona è già presente
+     */
+    public void aggiungiPersonaAIncarico(String nomeIncarico, String nomePersona) {
+        incarichi = engine.GestoreIncarichi.aggiungiPersonaAIncarico(incarichi, nomeIncarico, nomePersona);
+    }
+    
+    /**
+     * Rimuove una persona da un incarico
+     * @param nomeIncarico Nome dell'incarico
+     * @param nomePersona Nome della persona da rimuovere
+     * @throws IllegalArgumentException Se l'incarico non esiste o la persona non è presente
+     */
+    public void rimuoviPersonaDaIncarico(String nomeIncarico, String nomePersona) {
+        incarichi = engine.GestoreIncarichi.rimuoviPersonaDaIncarico(incarichi, nomeIncarico, nomePersona);
+    }
+    
+    /**
+     * Salva gli incarichi su file CSV
+     * @param filePath Percorso del file di destinazione
+     * @throws Exception Se si verifica un errore durante la scrittura
+     */
+    public void salvaIncarichi(String filePath) throws Exception {
+        io.ScrittoreIncarichiCSV.scriviIncarichi(incarichi, filePath);
+    }
+    
+    /**
+     * Carica gli incarichi da file CSV
+     * @param filePath Percorso del file da caricare
+     * @throws Exception Se si verifica un errore durante la lettura
+     */
+    public void caricaIncarichiDaFile(String filePath) throws Exception {
+        incarichi = io.LettoreCSV.leggiIncarichi(filePath);
+    }
+
+    /**
+     * Imposta la lista degli incarichi
+     * @param incarichi Nuova lista degli incarichi
+     */
+    public void setIncarichi(List<Incarico> incarichi) {
+        this.incarichi = new ArrayList<>(incarichi);
+    }
 } 
